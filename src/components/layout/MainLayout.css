@@ -1,0 +1,9 @@
+.main-content {
+  padding: 24px;
+  background-color: #f9fafb;
+}
+
+.main-content > * {
+  max-width: 1400px;
+  margin: 0 auto;
+}

@@ -1,0 +1,24 @@
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+}
+
+.login-card {
+  width: 100%;
+  max-width: 400px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.login-card .ant-card-head {
+  background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+  color: white;
+}
+
+.login-card .ant-card-head-title {
+  color: white;
+  font-size: 18px;
+  font-weight: 600;
+}

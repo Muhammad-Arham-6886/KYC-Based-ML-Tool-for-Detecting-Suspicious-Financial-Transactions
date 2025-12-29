@@ -1,0 +1,44 @@
+.dashboard-page {
+  width: 100%;
+}
+
+.stat-card {
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+  border: none;
+}
+
+.stat-card-low {
+  border-left: 4px solid #10b981;
+}
+
+.stat-card-medium {
+  border-left: 4px solid #f59e0b;
+}
+
+.stat-card-high {
+  border-left: 4px solid #dc2626;
+}
+
+.risk-score {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-weight: 700;
+  text-align: center;
+  min-width: 60px;
+}
+
+.risk-score-low {
+  background-color: #d1f2eb;
+  color: #0d9488;
+}
+
+.risk-score-medium {
+  background-color: #fef3c7;
+  color: #d97706;
+}
+
+.risk-score-high {
+  background-color: #fee2e2;
+  color: #dc2626;
+}
