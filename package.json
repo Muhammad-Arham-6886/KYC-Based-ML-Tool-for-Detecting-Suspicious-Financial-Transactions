@@ -68,6 +68,7 @@
     "axe-playwright": "^2.0.0",
     "axe-core": "^4.6.3"
   }
+  ,
   "overrides": {
     "vite": "npm:rolldown-vite@7.2.5"
   }
