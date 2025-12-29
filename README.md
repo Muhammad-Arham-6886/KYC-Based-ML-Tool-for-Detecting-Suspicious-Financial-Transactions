@@ -1,3 +1,72 @@
+# KYC-Based ML Tool (Frontend)
+
+This repo contains the frontend SPA for the KYC risk-evaluation project (Vite + React + TypeScript + Tailwind).
+
+## Migration Summary
+- Branch: `chore/migrate-to-vitest` — migration of unit tests from Jest to Vitest.
+- Added: Vitest configuration for fast local/CI runs, Playwright E2E skeleton with Axe accessibility checks, and branch CI workflow to validate the migration before switching `main`.
+
+## How to run locally
+
+Install dependencies:
+
+```powershell
+npm ci
+```
+
+Run dev server:
+
+```powershell
+npm run dev
+```
+
+Build production:
+
+```powershell
+npm run build
+npm run compress:dist   # optional: create .gz and .br artifacts for dist
+```
+
+## Tests
+
+- Unit (Vitest):
+
+```powershell
+npx vitest --config vitest.config.cjs --run
+```
+
+- Legacy Jest commands are preserved on `main` but the migration branch uses Vitest.
+
+- E2E (Playwright) — skeleton added:
+
+```powershell
+npm run test:e2e
+npx playwright install --with-deps
+```
+
+Note: Playwright and Axe are listed as optional dependencies; install them if you plan to run E2E locally.
+
+## CI Workflows
+
+- `.github/workflows/vitest-migration.yml` — runs on `chore/migrate-to-vitest` (Vitest + build + compressed artifact upload). It now supports `workflow_dispatch` for manual runs.
+- `.github/workflows/e2e.yml` — Playwright E2E workflow (manual dispatch + push triggers for `chore/migrate-to-vitest` and `main`).
+
+If Actions show no runs, ensure repository Actions are allowed in Settings → Actions → General.
+
+## Bundle size & next steps
+
+- `recharts` and `react` vendor chunks are the largest contributors; three charts were lazy-loaded to reduce initial payload.
+- Next options to further reduce bundle size:
+  - Replace `recharts` with a lighter charting library (e.g., `chart.js` + `react-chartjs-2`) for smaller vendor size.
+  - Further manual chunk splitting in `vite.config.ts`.
+  - Remove unused Tailwind classes (purge already narrowed to `./src/**/*.{ts,tsx,js,jsx}`).
+
+## How I can help next
+- Monitor CI runs and fetch artifacts (I can use a GitHub PAT or you can paste run URLs).
+- Implement Playwright tests for critical flows and expand Axe/Lighthouse checks in CI.
+- Propose and implement a `recharts` -> `react-chartjs-2` migration with examples.
+
+If you want me to proceed with any of the next steps, tell me which and I'll implement it.
 # React + TypeScript + Vite
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
