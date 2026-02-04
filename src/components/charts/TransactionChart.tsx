@@ -1,58 +1,12 @@
-import React from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
-import type { Transaction } from '../../store/slices/transactionSlice';
+import React, { Suspense } from 'react';
 
-interface TransactionChartProps {
-  transactions: Transaction[];
-}
+const LazyTransactionChart = React.lazy(() => import('./TransactionChart.impl'));
 
-export const TransactionChart: React.FC<TransactionChartProps> = ({ transactions }) => {
-  // Process transactions for chart
-  const chartData = transactions
-    .sort(
-      (a, b) =>
-        new Date(a.date).getTime() - new Date(b.date).getTime()
-    )
-    .slice(-20) // Last 20 transactions
-    .map((txn) => ({
-      date: new Date(txn.date).toLocaleTimeString(),
-      amount: txn.amount,
-      type: txn.type,
-    }));
-
-  if (chartData.length === 0) {
-    return <div style={{ textAlign: 'center', padding: '40px' }}>No data to display</div>;
-  }
-
+export const TransactionChart: React.FC<{ transactions: any[] }> = (props) => {
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={chartData} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip
-          formatter={(value) => `PKR ${(value as number).toLocaleString()}`}
-          labelFormatter={(label) => `Time: ${label}`}
-        />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="amount"
-          stroke="#1e3a8a"
-          dot={false}
-          name="Transaction Amount"
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <Suspense fallback={<div style={{height: 300}}>Loading chart…</div>}>
+      <LazyTransactionChart {...props} />
+    </Suspense>
   );
 };
 

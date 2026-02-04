@@ -1,197 +1,249 @@
 import React, { useEffect, useState, lazy, Suspense } from 'react';
-import { FiRotateCw, FiDownload, FiAlertTriangle, FiCheckCircle, FiAlertCircle } from 'react-icons/fi';
-import { useAppSelector } from '../../hooks/reduxHooks';
+import { Row, Col, Card, Button, Table, Tag, Badge, Tabs, Alert, Space, Typography } from 'antd';
+import { ReloadOutlined, CheckCircleFilled, WarningFilled, FireFilled, CaretUpOutlined, ArrowUpOutlined, CloudDownloadOutlined } from '@ant-design/icons';
 import type { RiskScore, RiskAlert } from '../../services/riskService';
-import { riskService } from '../../services/riskService';
+import { MainLayout } from '../../components/layout/MainLayout';
+
 const RiskScoreChart = lazy(() => import('../../components/charts/RiskScoreChart'));
 const BehaviorDriftChart = lazy(() => import('../../components/charts/BehaviorDriftChart'));
-import { MainLayout } from '../../components/layout/MainLayout';
-import './DashboardPage.css';
+
+const { Title, Text } = Typography;
 
 export const DashboardPage: React.FC = () => {
-  const { profiles } = useAppSelector((state) => state.kyc);
+  // profiles not required on this page currently
   const [riskScores, setRiskScores] = useState<RiskScore[]>([]);
   const [riskAlerts, setRiskAlerts] = useState<RiskAlert[]>([]);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     fetchDashboardData();
   }, []);
 
   const fetchDashboardData = async () => {
+    setLoading(true);
     try {
-      // const scores = await riskService.getRiskScores();
-      // const alerts = await riskService.getAlerts();
-      // setRiskScores(scores);
-      // setRiskAlerts(alerts);
+      setTimeout(() => {
+        setRiskScores([
+          { customerId: 'CUST-001', riskLevel: 'Low', score: 25, factors: ['Stable income'], timestamp: new Date().toISOString() },
+          { customerId: 'CUST-002', riskLevel: 'Medium', score: 60, factors: ['Income increase'], timestamp: new Date().toISOString() },
+          { customerId: 'CUST-003', riskLevel: 'High', score: 85, factors: ['Rapid movement', 'Large transfers'], timestamp: new Date().toISOString() },
+          { customerId: 'CUST-004', riskLevel: 'Low', score: 15, factors: ['Salary deposit'], timestamp: new Date().toISOString() },
+        ]);
 
-      // Mock data
-      setRiskScores([
-        {
-          customerId: '1',
-          riskLevel: 'Low',
-          score: 25,
-          factors: ['Stable income', 'Regular transactions'],
-          timestamp: new Date().toISOString(),
-        },
-        {
-          customerId: '2',
-          riskLevel: 'Medium',
-          score: 60,
-          factors: ['Income increase', 'Unusual spending pattern'],
-          timestamp: new Date().toISOString(),
-        },
-      ]);
-
-      setRiskAlerts([
-        {
-          id: '1',
-          customerId: '2',
-          riskLevel: 'Medium',
-          message: 'Behavior shift detected - Income increase detected',
-          timestamp: new Date().toISOString(),
-          actionRequired: true,
-        },
-        {
-          id: '2',
-          customerId: '1',
-          riskLevel: 'Low',
-          message: 'KYC profile verification complete',
-          timestamp: new Date().toISOString(),
-          actionRequired: false,
-        },
-      ]);
+        setRiskAlerts([
+          { id: '1', customerId: 'CUST-002', riskLevel: 'Medium', message: 'Behavior shift detected - SUDDEN_INCOME_SPIKE', timestamp: new Date().toISOString(), actionRequired: true },
+          { id: '2', customerId: 'CUST-003', riskLevel: 'High', message: 'Suspicious overseas transfer detected', timestamp: new Date(Date.now() - 3600000).toISOString(), actionRequired: true },
+          { id: '3', customerId: 'CUST-001', riskLevel: 'Low', message: 'KYC Verification Successful', timestamp: new Date(Date.now() - 86400000).toISOString(), actionRequired: false },
+        ]);
+        setLoading(false);
+      }, 800);
     } catch (error) {
       console.error('Failed to load dashboard data', error);
+      setLoading(false);
     }
   };
 
-  const handleExportReport = async (format: 'pdf' | 'csv') => {
-    try {
-      const blob = await riskService.exportReport(format);
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `risk-report.${format}`;
-      a.click();
-      // lightweight feedback
-      console.info(`Report exported as ${format.toUpperCase()}`);
-    } catch (error) {
-      console.error(`Failed to export report`);
+  const handleExport = (format: 'pdf' | 'csv') => {
+    console.info(`Exporting as ${format.toUpperCase()}`);
+  };
+
+  const riskStats = {
+    low: riskScores.filter(r => r.riskLevel === 'Low').length,
+    medium: riskScores.filter(r => r.riskLevel === 'Medium').length,
+    high: riskScores.filter(r => r.riskLevel === 'High').length,
+  };
+
+  const columns = [
+    {
+      title: 'Customer',
+      dataIndex: 'customerId',
+      key: 'customerId',
+      render: (text: string) => <span className="font-semibold text-slate-700">{text}</span>
+    },
+    {
+      title: 'Risk Score',
+      dataIndex: 'score',
+      key: 'score',
+      render: (score: number) => {
+        let color = score < 40 ? '#10b981' : score < 70 ? '#f59e0b' : '#ef4444';
+        return (
+          <div className="flex items-center gap-2">
+            <div className="w-16 h-2 rounded-full bg-slate-100 overflow-hidden">
+              <div className="h-full rounded-full transition-all duration-500" style={{ width: `${score}%`, backgroundColor: color }}></div>
+            </div>
+            <span className="font-bold text-xs" style={{ color }}>{score}</span>
+          </div>
+        );
+      }
+    },
+    {
+      title: 'Status',
+      dataIndex: 'riskLevel',
+      key: 'riskLevel',
+      render: (text: string) => {
+        let color = text === 'Low' ? 'success' : text === 'Medium' ? 'warning' : 'error';
+        return <Tag color={color} className="font-medium rounded-full px-3">{text.toUpperCase()}</Tag>;
+      }
+    },
+    { title: 'Key Factors', dataIndex: 'factors', key: 'factors', render: (factors: string[]) => <span className="text-xs text-slate-500">{factors.join(', ')}</span> },
+  ];
+
+  const alertColumns = [
+    { title: 'Time', dataIndex: 'timestamp', key: 'timestamp', render: (t: string) => <span className="text-slate-500 text-xs">{new Date(t).toLocaleString()}</span> },
+    {
+      title: 'Severity',
+      dataIndex: 'riskLevel',
+      key: 'riskLevel',
+      render: (text: string) => <Badge status={text === 'High' ? 'error' : text === 'Medium' ? 'warning' : 'default'} text={text} />
+    },
+    { title: 'Message', dataIndex: 'message', key: 'message', render: (text: string) => <span className="font-medium text-slate-700">{text}</span> },
+    {
+      title: 'Action',
+      dataIndex: 'actionRequired',
+      key: 'actionRequired',
+      render: (req: boolean) => req ? <Button type="link" size="small" danger>Review</Button> : <span className="text-slate-400">Archived</span>
     }
-  };
+  ];
 
-  const riskStatistics = {
-    low: riskScores.filter((r) => r.riskLevel === 'Low').length,
-    medium: riskScores.filter((r) => r.riskLevel === 'Medium').length,
-    high: riskScores.filter((r) => r.riskLevel === 'High').length,
-  };
-
-  // simple render helpers for tables
-  const [selectedTab, setSelectedTab] = useState<'risk-scores' | 'alerts'>('risk-scores');
+  const StatCard = ({ title, value, color, icon, subtext }: { title: string, value: number, color: string, icon: React.ReactNode, subtext?: React.ReactNode }) => (
+    <Card bordered={false} className="h-full shadow-sm hover:shadow-md transition-shadow duration-300 rounded-2xl overflow-hidden border border-slate-100">
+      <div className="flex justify-between items-start">
+        <div>
+          <Text className="text-slate-500 text-xs font-bold uppercase tracking-wider">{title}</Text>
+          <Title level={3} className="m-0 mt-1 text-2xl">{value}</Title>
+          {subtext && <div className="mt-2">{subtext}</div>}
+        </div>
+        <div className={`w-12 h-12 rounded-xl flex items-center justify-center text-xl`} style={{ backgroundColor: `${color}15`, color: color }}>
+          {icon}
+        </div>
+      </div>
+    </Card>
+  );
 
   return (
     <MainLayout>
-      <div className="dashboard-page">
-        <div className="dashboard-controls" style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginBottom: 16 }}>
-          <button onClick={fetchDashboardData} className="btn-secondary"><FiRotateCw /> Refresh</button>
-          <button onClick={() => handleExportReport('pdf')} className="btn-secondary"><FiDownload /> Export PDF</button>
-          <button onClick={() => handleExportReport('csv')} className="btn-secondary"><FiDownload /> Export CSV</button>
+      <div className="flex flex-col md:flex-row justify-between items-center mb-8 gap-4 pt-4">
+        <div>
+          <Title level={4} className="m-0 text-slate-800">System Overview</Title>
+          <Text className="text-slate-500">Real-time risk monitoring and alerts</Text>
         </div>
+        <Space>
+          <Button icon={<ReloadOutlined />} onClick={fetchDashboardData} loading={loading} className="rounded-lg border-slate-200">Refresh</Button>
+          <Button type="primary" icon={<CloudDownloadOutlined />} onClick={() => handleExport('pdf')} className="rounded-lg bg-blue-600 shadow-sm">Export Report</Button>
+        </Space>
+      </div>
 
-        <section className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 12, marginBottom: 24 }}>
-          <div className="stat-card stat-card-low">
-            <div className="stat-icon"><FiCheckCircle /></div>
-            <div className="stat-title">Low Risk</div>
-            <div className="stat-value">{riskStatistics.low}</div>
-          </div>
-          <div className="stat-card stat-card-medium">
-            <div className="stat-icon"><FiAlertTriangle /></div>
-            <div className="stat-title">Medium Risk</div>
-            <div className="stat-value">{riskStatistics.medium}</div>
-          </div>
-          <div className="stat-card stat-card-high">
-            <div className="stat-icon"><FiAlertCircle /></div>
-            <div className="stat-title">High Risk</div>
-            <div className="stat-value">{riskStatistics.high}</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-title">Total Customers</div>
-            <div className="stat-value">{profiles.length}</div>
-          </div>
-        </section>
+      <Row gutter={[32, 32]}>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Low Risk Profiles"
+            value={riskStats.low}
+            color="#10b981"
+            icon={<CheckCircleFilled />}
+            subtext={<span className="text-green-600 text-xs font-semibold flex items-center gap-1"><ArrowUpOutlined /> +5% this week</span>}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Medium Risk Attention"
+            value={riskStats.medium}
+            color="#f59e0b"
+            icon={<WarningFilled />}
+            subtext={<span className="text-slate-400 text-xs">Requires review</span>}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Critical Alerts"
+            value={riskStats.high}
+            color="#ef4444"
+            icon={<FireFilled />}
+            subtext={<span className="text-red-500 text-xs font-bold animate-pulse">Action required</span>}
+          />
+        </Col>
+        <Col xs={24} sm={12} lg={6}>
+          <StatCard
+            title="Avg Risk Score"
+            value={42}
+            color="#3b82f6"
+            icon={<CaretUpOutlined />}
+            subtext={<span className="text-blue-500 text-xs font-semibold">Moderate Level</span>}
+          />
+        </Col>
+      </Row>
 
-        <section style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
-          <div className="card">
-            <h3>Risk Score Distribution</h3>
-            <Suspense fallback={<div className="chart-fallback">Loading chart...</div>}>
-              <RiskScoreChart riskScores={riskScores} />
-            </Suspense>
-          </div>
-          <div className="card">
-            <h3>Behavior Drift Detection</h3>
-            <Suspense fallback={<div className="chart-fallback">Loading chart...</div>}>
+      <Row gutter={[32, 32]}>
+        <Col xs={24} lg={16}>
+          <Card title="Traffic & Risk Trends" bordered={false} className="shadow-sm rounded-2xl h-full border border-slate-100">
+            <Suspense fallback={<div className="h-64 flex items-center justify-center">Loading Chart...</div>}>
               <BehaviorDriftChart />
             </Suspense>
-          </div>
-        </section>
+          </Card>
+        </Col>
+        <Col xs={24} lg={8}>
+          <Card title="Risk Distribution" bordered={false} className="shadow-sm rounded-2xl h-full border border-slate-100">
+            <Suspense fallback={<div className="h-64 flex items-center justify-center">Loading Chart...</div>}>
+              <RiskScoreChart riskScores={riskScores} />
+            </Suspense>
+          </Card>
+        </Col>
+      </Row>
 
-        <section className="tabs card" style={{ padding: 12 }}>
-          <div className="tab-headers" style={{ display: 'flex', gap: 12, marginBottom: 12 }}>
-            <button className={`tab-btn ${selectedTab === 'risk-scores' ? 'active' : ''}`} onClick={() => setSelectedTab('risk-scores')}>Risk Scores</button>
-            <button className={`tab-btn ${selectedTab === 'alerts' ? 'active' : ''}`} onClick={() => setSelectedTab('alerts')}>Alerts {riskAlerts.filter(a => a.actionRequired).length > 0 && (<span className="badge">{riskAlerts.filter(a => a.actionRequired).length}</span>)}</button>
-          </div>
-
-          {selectedTab === 'risk-scores' && (
-            <table className="data-table">
-              <thead>
-                <tr><th>Customer ID</th><th>Risk Score</th><th>Risk Level</th><th>Key Factors</th></tr>
-              </thead>
-              <tbody>
-                {riskScores.map(r => (
-                  <tr key={r.customerId}>
-                    <td>{r.customerId}</td>
-                    <td><div className={`risk-score risk-score-${r.score < 40 ? 'low' : r.score < 70 ? 'medium' : 'high'}`}>{r.score}%</div></td>
-                    <td>{r.riskLevel}</td>
-                    <td>{r.factors.join(', ')}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-
-          {selectedTab === 'alerts' && (
-            <table className="data-table">
-              <thead>
-                <tr><th>Timestamp</th><th>Risk Level</th><th>Message</th><th>Action</th></tr>
-              </thead>
-              <tbody>
-                {riskAlerts.map(a => (
-                  <tr key={a.id}>
-                    <td>{new Date(a.timestamp).toLocaleString()}</td>
-                    <td>{a.riskLevel}</td>
-                    <td>{a.message}</td>
-                    <td>{a.actionRequired ? 'Required' : 'None'}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
-        </section>
-
-        <section className="card" style={{ marginTop: 16 }}>
-          <h3>Recent Activity Log</h3>
-          <table className="data-table">
-            <thead>
-              <tr><th>Timestamp</th><th>Action</th><th>Details</th></tr>
-            </thead>
-            <tbody>
-              {[{ key: '1', action: 'Profile Updated', details: 'KYC profile updated for customer ID 2' },{ key: '2', action: 'Alert Generated', details: 'High-risk transaction detected' },{ key: '3', action: 'Report Generated', details: 'Monthly compliance report generated' }].map((row, idx) => (
-                <tr key={row.key}><td>{new Date(Date.now() - idx*5*60*1000).toLocaleString()}</td><td>{row.action}</td><td>{row.details}</td></tr>
-              ))}
-            </tbody>
-          </table>
-        </section>
-      </div>
+      <Card className="shadow-sm rounded-2xl border border-slate-100" bordered={false} bodyStyle={{ padding: 0 }}>
+        <Tabs
+          defaultActiveKey="1"
+          size="large"
+          tabBarStyle={{ padding: '0 24px' }}
+          items={[
+            {
+              key: '1',
+              label: 'Live Monitoring',
+              children: <div className="p-4"><Table dataSource={riskScores} columns={columns} rowKey="customerId" pagination={{ pageSize: 5 }} /></div>
+            },
+            {
+              key: '2',
+              label: (
+                <span className="flex items-center gap-2">
+                  Alerts
+                  {riskAlerts.filter(a => a.actionRequired).length > 0 &&
+                    <span className="bg-red-100 text-red-600 text-xs font-bold px-2 py-0.5 rounded-full">{riskAlerts.filter(a => a.actionRequired).length}</span>
+                  }
+                </span>
+              ),
+              children: (
+                <div className="p-4">
+                  {riskAlerts.some(a => a.actionRequired) && (
+                    <Alert message="Critical Action Required" description="High-risk behavior detected in multiple accounts." type="error" showIcon className="mb-4 rounded-lg" />
+                  )}
+                  <Table dataSource={riskAlerts} columns={alertColumns} rowKey="id" />
+                </div>
+              )
+            },
+            {
+              key: '3',
+              label: 'System Logs',
+              children: (
+                <div className="p-4">
+                  <Table
+                    dataSource={[
+                      { id: 1, action: 'User Login', user: 'Admin', time: new Date().toLocaleString() },
+                      { id: 2, action: 'Viewed Profile CUST-002', user: 'Admin', time: new Date(Date.now() - 100000).toLocaleString() },
+                      { id: 3, action: 'Exported PDF Report', user: 'Manager', time: new Date(Date.now() - 500000).toLocaleString() },
+                    ]}
+                    columns={[
+                      { title: 'Time', dataIndex: 'time', key: 'time', render: (t) => <span className="font-mono text-xs">{t}</span> },
+                      { title: 'User', dataIndex: 'user', key: 'user' },
+                      { title: 'Action', dataIndex: 'action', key: 'action' },
+                    ]}
+                    rowKey="id"
+                    size="small"
+                  />
+                </div>
+              )
+            }
+          ]}
+        />
+      </Card>
     </MainLayout>
   );
 };

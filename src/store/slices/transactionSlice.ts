@@ -18,6 +18,7 @@ interface TransactionState {
     amount: number;
     frequency: number;
     transactionType: 'Income' | 'Expense' | 'Transfer';
+    customerId?: string;
   };
   loading: boolean;
 }
@@ -29,6 +30,7 @@ const initialState: TransactionState = {
     amount: 5000,
     frequency: 5,
     transactionType: 'Income',
+    customerId: '1',
   },
   loading: false,
 };
@@ -52,6 +54,7 @@ export const transactionSlice = createSlice({
         amount?: number;
         frequency?: number;
         transactionType?: 'Income' | 'Expense' | 'Transfer';
+        customerId?: string;
       }>
     ) => {
       if (action.payload.amount !== undefined) {
@@ -62,6 +65,9 @@ export const transactionSlice = createSlice({
       }
       if (action.payload.transactionType !== undefined) {
         state.simulationParams.transactionType = action.payload.transactionType;
+      }
+      if (action.payload.customerId !== undefined) {
+        state.simulationParams.customerId = action.payload.customerId;
       }
     },
     clearTransactions: (state) => {

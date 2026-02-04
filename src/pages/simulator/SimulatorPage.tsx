@@ -1,5 +1,6 @@
-import React, { useState, useEffect, lazy, Suspense } from 'react';
-import { FiPlay, FiPause, FiTrash2 } from 'react-icons/fi';
+import React, { useEffect, lazy, Suspense } from 'react';
+import { Card, Button, Form, Select, InputNumber, Table, Tag, Row, Col, Statistic, Alert } from 'antd';
+import { PlayCircleOutlined, PauseCircleOutlined, ClearOutlined, ThunderboltOutlined, ExperimentOutlined } from '@ant-design/icons';
 import { useAppDispatch, useAppSelector } from '../../hooks/reduxHooks';
 import {
   setTransactions,
@@ -8,50 +9,25 @@ import {
   addTransaction,
   setLoading,
 } from '../../store/slices/transactionSlice';
-const TransactionChart = lazy(() => import('../../components/charts/TransactionChart'));
 import { MainLayout } from '../../components/layout/MainLayout';
-import './SimulatorPage.css';
+
+const TransactionChart = lazy(() => import('../../components/charts/TransactionChart'));
+
+const { Option } = Select;
 
 export const SimulatorPage: React.FC = () => {
   const dispatch = useAppDispatch();
   const { transactions, isSimulating, simulationParams, loading } = useAppSelector(
     (state) => state.transaction
   );
-  const [selectedCustomerId, setSelectedCustomerId] = useState<string>('');
+  const [form] = Form.useForm();
 
   // Mock customer data
   const customers = [
-    { label: 'Ahmed Ali', value: '1' },
-    { label: 'Fatima Khan', value: '2' },
+    { label: 'Ahmed Ali (CUST-001)', value: '1' },
+    { label: 'Fatima Khan (CUST-002)', value: '2' },
+    { label: 'Bilal Ahmed (CUST-003)', value: '3' },
   ];
-
-  const handleStartSimulation = async () => {
-    if (!selectedCustomerId) {
-      // eslint-disable-next-line no-alert
-      alert('Please select a customer');
-      return;
-    }
-
-    try {
-      dispatch(setLoading(true));
-      dispatch(setIsSimulating(true));
-      // eslint-disable-next-line no-alert
-      alert('Simulation started');
-    } catch (error) {
-      // eslint-disable-next-line no-console
-      console.error('Failed to start simulation', error);
-    } finally {
-      dispatch(setLoading(false));
-    }
-  };
-
-  const handleStopSimulation = () => {
-    dispatch(setIsSimulating(false));
-    // eslint-disable-next-line no-alert
-    alert('Simulation stopped');
-  };
-
-
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval>;
@@ -59,13 +35,9 @@ export const SimulatorPage: React.FC = () => {
       interval = setInterval(() => {
         const transaction = {
           id: `TXN-${Date.now()}`,
-          customerId: selectedCustomerId,
+          customerId: simulationParams.customerId || '1',
           amount: Math.floor(Math.random() * 50000) + 1000,
-          type: [
-            'Income',
-            'Expense',
-            'Transfer',
-          ][Math.floor(Math.random() * 3)] as 'Income' | 'Expense' | 'Transfer',
+          type: ['Income', 'Expense', 'Transfer'][Math.floor(Math.random() * 3)] as 'Income' | 'Expense' | 'Transfer',
           date: new Date().toISOString(),
           description: `Simulated ${simulationParams.transactionType}`,
           category: 'Simulated',
@@ -76,107 +48,176 @@ export const SimulatorPage: React.FC = () => {
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isSimulating, simulationParams.frequency, dispatch, selectedCustomerId]);
+  }, [isSimulating, simulationParams, dispatch]);
 
-  // simple columns will be rendered in a plain table below
+  const handleStartSimulation = () => {
+    form.validateFields().then(() => {
+      // Values are already in sync via Redux but good to validate
+      dispatch(setLoading(true));
+      setTimeout(() => {
+        dispatch(setIsSimulating(true));
+        dispatch(setLoading(false));
+      }, 500);
+    });
+  };
+
+  const handleStopSimulation = () => {
+    dispatch(setIsSimulating(false));
+  };
+
+  const columns = [
+    { title: 'Transaction ID', dataIndex: 'id', key: 'id' },
+    {
+      title: 'Type',
+      dataIndex: 'type',
+      key: 'type',
+      render: (type: string) => {
+        const color = type === 'Income' ? 'green' : type === 'Expense' ? 'red' : 'blue';
+        return <Tag color={color}>{type}</Tag>;
+      }
+    },
+    {
+      title: 'Amount',
+      dataIndex: 'amount',
+      key: 'amount',
+      align: 'right' as const,
+      render: (val: number) => `PKR ${val.toLocaleString()}`
+    },
+    { title: 'Date', dataIndex: 'date', key: 'date', render: (d: string) => new Date(d).toLocaleTimeString() },
+    { title: 'Category', dataIndex: 'category', key: 'category' },
+  ];
 
   return (
     <MainLayout>
-      <div className="simulator-page">
-        <div className="card">
-          <h3>Transaction Simulator Configuration</h3>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-            <div style={{ flex: '1 1 220px' }}>
-              <label>Select Customer</label>
-              <select value={selectedCustomerId} onChange={(e) => setSelectedCustomerId(e.target.value)} style={{ width: '100%', padding: 8 }}>
-                <option value="">-- Choose a customer --</option>
-                {customers.map((c) => (
-                  <option key={c.value} value={c.value}>{c.label}</option>
-                ))}
-              </select>
-            </div>
-
-            <div style={{ flex: '1 1 180px' }}>
-              <label>Transaction Type</label>
-              <select
-                value={simulationParams.transactionType}
-                onChange={(e) => dispatch(setSimulationParams({ transactionType: e.target.value as 'Income' | 'Expense' | 'Transfer' }))}
-                style={{ width: '100%', padding: 8 }}
-              >
-                <option value="Income">Income</option>
-                <option value="Expense">Expense</option>
-                <option value="Transfer">Transfer</option>
-              </select>
-            </div>
-
-            <div style={{ flex: '1 1 180px' }}>
-              <label>Amount (PKR)</label>
-              <input type="number" min={100} value={simulationParams.amount} onChange={(e) => dispatch(setSimulationParams({ amount: Number(e.target.value || 0) }))} style={{ width: '100%', padding: 8 }} />
-            </div>
-
-            <div style={{ flex: '1 1 180px' }}>
-              <label>Frequency (seconds)</label>
-              <input type="number" min={1} max={60} value={simulationParams.frequency} onChange={(e) => dispatch(setSimulationParams({ frequency: Number(e.target.value || 1) }))} style={{ width: '100%', padding: 8 }} />
-            </div>
-          </div>
-
-          <div style={{ marginTop: 12, display: 'flex', gap: 8 }}>
-            {!isSimulating ? (
-              <button className="btn-primary" onClick={handleStartSimulation} disabled={loading}><FiPlay /> Start Simulation</button>
-            ) : (
-              <button className="btn-danger" onClick={handleStopSimulation}><FiPause /> Stop Simulation</button>
-            )}
-            <button className="btn-secondary" onClick={() => dispatch(setTransactions([]))}><FiTrash2 /> Clear Transactions</button>
-          </div>
-
-          {isSimulating && (
-            <div style={{ marginTop: 12 }}>
-              <span style={{ color: '#10b981', fontWeight: 600 }}>🟢 Simulation Active - Generating transactions every {simulationParams.frequency}s</span>
-            </div>
-          )}
-        </div>
-
-        {transactions.length > 0 && (
-          <>
-            <div className="card" style={{ marginTop: 16 }}>
-              <h3>Transaction Trends</h3>
-              <Suspense fallback={<div className="chart-fallback">Loading chart...</div>}>
-                <TransactionChart transactions={transactions} />
-              </Suspense>
-            </div>
-
-            <div className="card" style={{ marginTop: 16 }}>
-              <h3>Real-time Transaction Feed ({transactions.length} transactions)</h3>
-              {loading ? (
-                <div style={{ padding: 16 }}>Loading...</div>
-              ) : (
-                <table className="data-table" style={{ width: '100%', marginTop: 8 }}>
-                  <thead>
-                    <tr>
-                      <th>Transaction ID</th>
-                      <th>Type</th>
-                      <th style={{ textAlign: 'right' }}>Amount</th>
-                      <th>Date</th>
-                      <th>Category</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {transactions.map((t: any) => (
-                      <tr key={t.id}>
-                        <td>{t.id}</td>
-                        <td><span className={`transaction-type ${t.type.toLowerCase()}`}>{t.type}</span></td>
-                        <td style={{ textAlign: 'right' }}>{`PKR ${t.amount.toLocaleString()}`}</td>
-                        <td>{new Date(t.date).toLocaleString()}</td>
-                        <td>{t.category}</td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              )}
-            </div>
-          </>
-        )}
+      <div className="mb-8 mt-2">
+        <h2 className="text-2xl font-bold text-slate-800 m-0">Transaction Simulator</h2>
+        <p className="text-slate-500">Generate synthetic transaction patterns to test risk models.</p>
       </div>
+
+      <Row gutter={[16, 16]}>
+        <Col xs={24} lg={8}>
+          <Card title="Configuration" className="shadow-sm h-full" bordered={false}>
+            <Form
+              layout="vertical"
+              form={form}
+              initialValues={{
+                customerId: '1',
+                transactionType: 'Income',
+                amount: 5000,
+                frequency: 2
+              }}
+              onValuesChange={(_, allValues) => {
+                dispatch(setSimulationParams(allValues));
+              }}
+            >
+              <Form.Item label="Select Customer" name="customerId" rules={[{ required: true }]}>
+                <Select disabled={isSimulating}>
+                  {customers.map(c => <Option key={c.value} value={c.value}>{c.label}</Option>)}
+                </Select>
+              </Form.Item>
+
+              <Row gutter={8}>
+                <Col span={12}>
+                  <Form.Item label="Type" name="transactionType">
+                    <Select disabled={isSimulating}>
+                      <Option value="Income">Income</Option>
+                      <Option value="Expense">Expense</Option>
+                      <Option value="Transfer">Transfer</Option>
+                    </Select>
+                  </Form.Item>
+                </Col>
+                <Col span={12}>
+                  <Form.Item label="Freq (sec)" name="frequency">
+                    <InputNumber min={0.5} max={60} style={{ width: '100%' }} disabled={isSimulating} />
+                  </Form.Item>
+                </Col>
+              </Row>
+
+              <Form.Item label="Base Amount (PKR)" name="amount">
+                <InputNumber
+                  min={100}
+                  style={{ width: '100%' }}
+                  formatter={(value) => `PKR ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={(value) => value!.replace(/\D/g, '') as unknown as 100}
+                  disabled={isSimulating}
+                />
+              </Form.Item>
+
+              <div className="flex flex-col gap-2 mt-4">
+                {!isSimulating ? (
+                  <Button type="primary" icon={<PlayCircleOutlined />} onClick={handleStartSimulation} loading={loading} block size="large">
+                    Start Simulation
+                  </Button>
+                ) : (
+                  <Button danger type="primary" icon={<PauseCircleOutlined />} onClick={handleStopSimulation} block size="large">
+                    Stop Simulation
+                  </Button>
+                )}
+                <Button icon={<ClearOutlined />} onClick={() => dispatch(setTransactions([]))} disabled={isSimulating} block>
+                  Clear History
+                </Button>
+              </div>
+
+              {isSimulating && (
+                <Alert
+                  message="Simulation Running"
+                  description="Generating transactions..."
+                  type="success"
+                  showIcon
+                  className="mt-4"
+                  action={<ExperimentOutlined spin />}
+                />
+              )}
+            </Form>
+          </Card>
+        </Col>
+
+        <Col xs={24} lg={16}>
+          <Row gutter={[16, 16]} className="h-full">
+            <Col span={24}>
+              <Card bodyStyle={{ padding: 12 }} className="h-auto shadow-sm" bordered={false}>
+                <Row justify="space-around">
+                  <Col span={8} className="text-center border-r border-slate-100">
+                    <Statistic title="Total Transactions" value={transactions.length} prefix={<ThunderboltOutlined />} />
+                  </Col>
+                  <Col span={8} className="text-center border-r border-slate-100">
+                    <Statistic
+                      title="Total Volume"
+                      value={transactions.reduce((acc, t) => acc + t.amount, 0)}
+                      prefix="PKR"
+                      precision={0}
+                      formatter={(val) => val ? val.toLocaleString() : ''}
+                    />
+                  </Col>
+                  <Col span={8} className="text-center">
+                    <Statistic title="Avg Amount" value={transactions.length ? Math.round(transactions.reduce((acc, t) => acc + t.amount, 0) / transactions.length) : 0} prefix="PKR" />
+                  </Col>
+                </Row>
+              </Card>
+            </Col>
+
+            <Col span={24}>
+              <Card title="Live Feed" className="shadow-sm" bordered={false} bodyStyle={{ padding: 0 }}>
+                <Table
+                  dataSource={[...transactions].reverse()}
+                  columns={columns}
+                  rowKey="id"
+                  pagination={{ pageSize: 5 }}
+                  size="small"
+                />
+              </Card>
+            </Col>
+
+            <Col span={24}>
+              <Card className="shadow-sm" bordered={false} bodyStyle={{ padding: 12 }}>
+                <Suspense fallback={<div>Loading chart...</div>}>
+                  <TransactionChart transactions={transactions} />
+                </Suspense>
+              </Card>
+            </Col>
+          </Row>
+        </Col>
+      </Row>
     </MainLayout>
   );
 };

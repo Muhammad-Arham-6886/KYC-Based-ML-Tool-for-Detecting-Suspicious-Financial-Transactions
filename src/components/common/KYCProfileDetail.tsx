@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { FiFileText } from 'react-icons/fi';
+import { Descriptions, Tag, List, Button, Alert, Card, Spin } from 'antd';
+import { FileTextOutlined, CheckCircleOutlined } from '@ant-design/icons';
 import { useAppSelector } from '../../hooks/reduxHooks';
 
 export const KYCProfileDetail: React.FC = () => {
@@ -17,15 +18,15 @@ export const KYCProfileDetail: React.FC = () => {
     if (!selectedProfile) return;
     try {
       setLoading(true);
-      // const data = await kycService.getUpdateSuggestions(selectedProfile.id);
-      // setSuggestions(data);
-      
       // Mock suggestions
-      setSuggestions([
-        'Update income information - Current employment shows higher income',
-        'Consider updating occupation profile',
-      ]);
-    } finally {
+      setTimeout(() => {
+        setSuggestions([
+          'Update income information - Current employment shows higher income',
+          'Consider updating occupation profile',
+        ]);
+        setLoading(false);
+      }, 500);
+    } catch (error) {
       setLoading(false);
     }
   };
@@ -33,46 +34,49 @@ export const KYCProfileDetail: React.FC = () => {
   if (!selectedProfile) return <div>No profile selected</div>;
 
   return (
-    <div>
-      {loading ? (
-        <div>Loading...</div>
-      ) : (
-        <>
-          <div className="details-grid">
-            <div className="detail-row"><strong>Full Name:</strong> {selectedProfile.name}</div>
-            <div className="detail-row"><strong>Email:</strong> {selectedProfile.email}</div>
-            <div className="detail-row"><strong>CNIC:</strong> {selectedProfile.cnic}</div>
-            <div className="detail-row"><strong>Occupation:</strong> {selectedProfile.occupation}</div>
-            <div className="detail-row"><strong>Expected Income:</strong> PKR {selectedProfile.expectedIncome.toLocaleString()}</div>
-            <div className="detail-row"><strong>Risk Level:</strong> <span className={`risk-badge risk-${selectedProfile.riskLevel.toLowerCase()}`}>{selectedProfile.riskLevel}</span></div>
-            <div className="detail-row"><strong>Created:</strong> {selectedProfile.createdAt}</div>
-            <div className="detail-row"><strong>Last Updated:</strong> {selectedProfile.lastUpdated}</div>
-          </div>
+    <Spin spinning={loading}>
+      <Descriptions bordered column={1} size="small" className="mb-6">
+        <Descriptions.Item label="Full Name">{selectedProfile.name}</Descriptions.Item>
+        <Descriptions.Item label="Email">{selectedProfile.email}</Descriptions.Item>
+        <Descriptions.Item label="CNIC">{selectedProfile.cnic}</Descriptions.Item>
+        <Descriptions.Item label="Occupation">{selectedProfile.occupation}</Descriptions.Item>
+        <Descriptions.Item label="Expected Income">{`PKR ${selectedProfile.expectedIncome.toLocaleString()}`}</Descriptions.Item>
+        <Descriptions.Item label="Risk Level">
+          <Tag color={selectedProfile.riskLevel === 'Low' ? 'green' : selectedProfile.riskLevel === 'Medium' ? 'orange' : 'red'}>
+            {selectedProfile.riskLevel}
+          </Tag>
+        </Descriptions.Item>
+        <Descriptions.Item label="Created At">{selectedProfile.createdAt}</Descriptions.Item>
+        <Descriptions.Item label="Last Updated">{selectedProfile.lastUpdated}</Descriptions.Item>
+      </Descriptions>
 
-          <hr />
-
-          <h3>Update Suggestions</h3>
-          {suggestions.length > 0 ? (
-            <div style={{ marginBottom: 16 }}>
-              {suggestions.map((s, i) => (
-                <div key={i} className="alert-warning">⚠️ {s}</div>
-              ))}
-              <button className="btn-primary" style={{ marginTop: 8 }}>Accept Suggestions</button>
-            </div>
-          ) : (
-            <div className="alert-success">No suggestions at this time</div>
-          )}
-
-          <hr />
-
-          <h3>Documents</h3>
-          <div className="docs-grid">
-            {selectedProfile.documents?.map((doc: string, idx: number) => (
-              <div key={idx} className="doc-card"><FiFileText /> {doc}</div>
+      <Card type="inner" title="AI Update Suggestions" className="mb-6" size="small">
+        {suggestions.length > 0 ? (
+          <>
+            {suggestions.map((s, i) => (
+              <Alert key={i} message={s} type="warning" showIcon className="mb-2" />
             ))}
-          </div>
-        </>
-      )}
-    </div>
+            <Button type="primary" icon={<CheckCircleOutlined />} size="small" className="mt-2">Accept All Suggestions</Button>
+          </>
+        ) : (
+          <Alert message="No suggestions available" type="success" showIcon />
+        )}
+      </Card>
+
+      <Card type="inner" title="Submitted Documents" size="small">
+        <List
+          grid={{ gutter: 16, column: 2 }}
+          dataSource={selectedProfile.documents || []}
+          renderItem={(item: any) => (
+            <List.Item>
+              <Card size="small" className="text-center bg-slate-50">
+                <FileTextOutlined style={{ fontSize: 24, color: '#1e3a8a' }} />
+                <div className="mt-2 text-xs font-semibold">{item}</div>
+              </Card>
+            </List.Item>
+          )}
+        />
+      </Card>
+    </Spin>
   );
 };

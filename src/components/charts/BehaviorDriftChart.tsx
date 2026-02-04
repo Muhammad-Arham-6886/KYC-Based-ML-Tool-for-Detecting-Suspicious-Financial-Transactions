@@ -1,51 +1,34 @@
 import React from 'react';
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-  ResponsiveContainer,
-} from 'recharts';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts';
+import { Card } from 'antd';
+
+const data = [
+  { name: 'Mon', riskScore: 20, drift: 5 },
+  { name: 'Tue', riskScore: 25, drift: 8 },
+  { name: 'Wed', riskScore: 22, drift: 6 },
+  { name: 'Thu', riskScore: 40, drift: 15 },
+  { name: 'Fri', riskScore: 35, drift: 12 },
+  { name: 'Sat', riskScore: 55, drift: 25 },
+  { name: 'Sun', riskScore: 50, drift: 20 },
+];
 
 export const BehaviorDriftChart: React.FC = () => {
-  const data = [
-    { date: 'Jan 1', expectedSpending: 15000, actualSpending: 14500 },
-    { date: 'Jan 8', expectedSpending: 15000, actualSpending: 16200 },
-    { date: 'Jan 15', expectedSpending: 15000, actualSpending: 18900 },
-    { date: 'Jan 22', expectedSpending: 15000, actualSpending: 22500 },
-    { date: 'Jan 29', expectedSpending: 15000, actualSpending: 28000 },
-  ];
-
   return (
-    <ResponsiveContainer width="100%" height={300}>
-      <LineChart data={data} margin={{ top: 5, right: 30, left: 0, bottom: 5 }}>
-        <CartesianGrid strokeDasharray="3 3" />
-        <XAxis dataKey="date" />
-        <YAxis />
-        <Tooltip
-          formatter={(value) => `PKR ${(value as number).toLocaleString()}`}
-          labelFormatter={(label) => `Date: ${label}`}
-        />
-        <Legend />
-        <Line
-          type="monotone"
-          dataKey="expectedSpending"
-          stroke="#0d9488"
-          name="Expected Spending"
-          strokeWidth={2}
-        />
-        <Line
-          type="monotone"
-          dataKey="actualSpending"
-          stroke="#dc2626"
-          name="Actual Spending"
-          strokeWidth={2}
-        />
-      </LineChart>
-    </ResponsiveContainer>
+    <Card title="Behavior Drift Analysis" bordered={false} className="shadow-sm h-full">
+      <ResponsiveContainer width="100%" height={300}>
+        <LineChart data={data}>
+          <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+          <XAxis dataKey="name" stroke="#94a3b8" />
+          <YAxis stroke="#94a3b8" />
+          <Tooltip
+            contentStyle={{ borderRadius: '8px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)' }}
+          />
+          <Legend />
+          <Line type="monotone" dataKey="riskScore" stroke="#1e3a8a" strokeWidth={2} activeDot={{ r: 8 }} name="Risk Score" />
+          <Line type="monotone" dataKey="drift" stroke="#dc2626" strokeWidth={2} name="Drift Metric" />
+        </LineChart>
+      </ResponsiveContainer>
+    </Card>
   );
 };
 

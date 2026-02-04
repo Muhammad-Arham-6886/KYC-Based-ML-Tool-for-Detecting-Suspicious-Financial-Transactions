@@ -1,9 +1,19 @@
 .main-content {
-  padding: 24px;
-  background-color: #f9fafb;
+  padding: 28px 32px;
+  background-color: var(--bg-color);
+  box-sizing: border-box;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
 }
 
-.main-content > * {
-  max-width: 1400px;
-  margin: 0 auto;
+.main-content>* {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    padding: 16px 12px;
+  }
 }

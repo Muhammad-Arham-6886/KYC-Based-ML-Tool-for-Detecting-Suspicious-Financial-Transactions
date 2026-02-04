@@ -1,24 +1,58 @@
-.login-container {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
+/* Custom overrides for specific AntD components in the login context */
+.modern-form .ant-input-affix-wrapper {
+    padding-top: 12px;
+    padding-bottom: 12px;
 }
 
-.login-card {
-  width: 100%;
-  max-width: 400px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+.modern-form .ant-input-affix-wrapper:hover {
+    border-color: #818cf8 !important;
+    /* Indigo 400 */
 }
 
-.login-card .ant-card-head {
-  background: linear-gradient(135deg, #1e3a8a 0%, #0d9488 100%);
-  color: white;
+.modern-form .ant-input-affix-wrapper:focus,
+.modern-form .ant-input-affix-wrapper-focused {
+    border-color: #6366f1 !important;
+    /* Indigo 500 */
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1) !important;
 }
 
-.login-card .ant-card-head-title {
-  color: white;
-  font-size: 18px;
-  font-weight: 600;
+@keyframes pulse-slow {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+}
+
+.animate-pulse-slow {
+    animation: pulse-slow 8s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Strict Layout Overrides Requested by User */
+.login-hero {
+    padding: 50px !important;
+}
+
+.login-card-custom {
+    /* Default Mobile Styles */
+    padding: 32px 24px !important;
+}
+
+.login-header-custom {
+    margin-bottom: 24px !important;
+}
+
+/* Desktop Styles */
+@media (min-width: 1024px) {
+    .login-card-custom {
+        padding: 70px 50px !important;
+    }
+
+    .login-header-custom {
+        margin-bottom: 30px !important;
+    }
 }

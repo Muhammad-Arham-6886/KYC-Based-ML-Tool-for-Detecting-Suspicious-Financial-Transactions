@@ -1,11 +1,14 @@
 import { defineConfig } from 'vite'
 import react from '@vitejs/plugin-react'
+import { visualizer } from 'rollup-plugin-visualizer'
 // style-import plugin removed due to build issues; using manual chunking
 
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [
     react(),
+    // visualizer generates an interactive bundle report at `dist/stats.html`
+    visualizer({ filename: 'dist/stats.html', open: false }),
   ],
   build: {
     rollupOptions: {

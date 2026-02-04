@@ -2,13 +2,16 @@ import React from 'react';
 import { Formik } from 'formik';
 import type { FormikHelpers } from 'formik';
 import * as Yup from 'yup';
+import { Form, Input, Select, Button, InputNumber, Row, Col } from 'antd';
+
+const { Option } = Select;
 
 const validationSchema = Yup.object().shape({
   name: Yup.string().required('Name is required'),
   email: Yup.string().email('Invalid email').required('Email is required'),
   occupation: Yup.string().required('Occupation is required'),
-  expectedIncome: Yup.number().min(0, 'Income cannot be negative'),
-  cnic: Yup.string().required('CNIC is required'),
+  expectedIncome: Yup.number().min(0, 'Income cannot be negative').required('Expected income is required'),
+  cnic: Yup.string().required('CNIC is required').matches(/^\d{5}-\d{7}-\d{1}$/, 'Invalid CNIC format (e.g., 12345-1234567-1)'),
 });
 
 interface KYCFormProps {
@@ -40,52 +43,115 @@ export const KYCForm: React.FC<KYCFormProps> = ({ profile, onSubmit, onCancel })
       validationSchema={validationSchema}
       onSubmit={handleSubmit}
     >
-      {({ values, errors, touched, handleChange, handleBlur, handleSubmit, isSubmitting }) => (
-          <form onSubmit={(e) => { e.preventDefault(); handleSubmit(); }} style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <label>
-              Full Name
-              <input name="name" value={values.name} onChange={handleChange} onBlur={handleBlur} placeholder="Enter full name" style={{ width: '100%', padding: 8 }} />
-              {touched.name && errors.name && <div className="field-error">{String(errors.name)}</div>}
-            </label>
+      {({
+        values,
+        errors,
+        touched,
+        handleChange,
+        handleBlur,
+        handleSubmit,
+        setFieldValue,
+        isSubmitting,
+      }) => (
+        <Form layout="vertical" onFinish={handleSubmit}>
+          <Row gutter={16}>
+            <Col span={24}>
+              <Form.Item
+                label="Full Name"
+                validateStatus={touched.name && errors.name ? 'error' : ''}
+                help={touched.name && String(errors.name)}
+              >
+                <Input
+                  name="name"
+                  value={values.name}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="Enter full name"
+                />
+              </Form.Item>
+            </Col>
 
-            <label>
-              Email
-              <input name="email" type="email" value={values.email} onChange={handleChange} onBlur={handleBlur} placeholder="Enter email address" style={{ width: '100%', padding: 8 }} />
-              {touched.email && errors.email && <div className="field-error">{String(errors.email)}</div>}
-            </label>
+            <Col span={12}>
+              <Form.Item
+                label="Email"
+                validateStatus={touched.email && errors.email ? 'error' : ''}
+                help={touched.email && String(errors.email)}
+              >
+                <Input
+                  name="email"
+                  value={values.email}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="Enter email"
+                />
+              </Form.Item>
+            </Col>
 
-            <label>
-              Occupation
-              <select value={values.occupation} onChange={(e) => { handleChange(e); }} onBlur={handleBlur} name="occupation" style={{ width: '100%', padding: 8 }}>
-                <option value="">Select occupation</option>
-                <option value="Software Engineer">Software Engineer</option>
-                <option value="Business Owner">Business Owner</option>
-                <option value="Student">Student</option>
-                <option value="Housewife">Housewife</option>
-                <option value="Retired">Retired</option>
-                <option value="Other">Other</option>
-              </select>
-              {touched.occupation && errors.occupation && <div className="field-error">{String(errors.occupation)}</div>}
-            </label>
+            <Col span={12}>
+              <Form.Item
+                label="CNIC Number"
+                validateStatus={touched.cnic && errors.cnic ? 'error' : ''}
+                help={touched.cnic && String(errors.cnic)}
+              >
+                <Input
+                  name="cnic"
+                  value={values.cnic}
+                  onChange={handleChange}
+                  onBlur={handleBlur}
+                  placeholder="12345-1234567-1"
+                />
+              </Form.Item>
+            </Col>
 
-            <label>
-              Expected Monthly Income (PKR)
-              <input type="number" name="expectedIncome" min={0} value={values.expectedIncome} onChange={(e) => { const v = Number(e.target.value || 0); handleChange({ target: { name: 'expectedIncome', value: v } } as any); }} onBlur={handleBlur} placeholder="Enter expected income" style={{ width: '100%', padding: 8 }} />
-              {touched.expectedIncome && errors.expectedIncome && <div className="field-error">{String(errors.expectedIncome)}</div>}
-            </label>
+            <Col span={12}>
+              <Form.Item
+                label="Occupation"
+                validateStatus={touched.occupation && errors.occupation ? 'error' : ''}
+                help={touched.occupation && String(errors.occupation)}
+              >
+                <Select
+                  value={values.occupation}
+                  onChange={(val) => setFieldValue('occupation', val)}
+                  onBlur={handleBlur}
+                  placeholder="Select occupation"
+                >
+                  <Option value="Software Engineer">Software Engineer</Option>
+                  <Option value="Business Owner">Business Owner</Option>
+                  <Option value="Student">Student</Option>
+                  <Option value="Housewife">Housewife</Option>
+                  <Option value="Retired">Retired</Option>
+                  <Option value="Other">Other</Option>
+                </Select>
+              </Form.Item>
+            </Col>
 
-            <label>
-              CNIC Number
-              <input name="cnic" value={values.cnic} onChange={handleChange} onBlur={handleBlur} placeholder="e.g., 12345-6789012-3" style={{ width: '100%', padding: 8 }} />
-              {touched.cnic && errors.cnic && <div className="field-error">{String(errors.cnic)}</div>}
-            </label>
+            <Col span={12}>
+              <Form.Item
+                label="Expected Monthly Income (PKR)"
+                validateStatus={touched.expectedIncome && errors.expectedIncome ? 'error' : ''}
+                help={touched.expectedIncome && String(errors.expectedIncome)}
+              >
+                <InputNumber
+                  name="expectedIncome"
+                  value={values.expectedIncome}
+                  onChange={(val) => setFieldValue('expectedIncome', val)}
+                  style={{ width: '100%' }}
+                  min={0}
+                  formatter={value => `PKR ${value}`.replace(/\B(?=(\d{3})+(?!\d))/g, ',')}
+                  parser={value => value!.replace(/\D/g, '')}
+                />
+              </Form.Item>
+            </Col>
+          </Row>
 
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button type="submit" className="btn-primary" disabled={isSubmitting}>{isSubmitting ? 'Saving...' : 'Save Profile'}</button>
-              <button type="button" onClick={onCancel} className="btn-secondary">Cancel</button>
-            </div>
-          </form>
-        )}
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: 8, marginTop: 16 }}>
+            <Button onClick={onCancel}>Cancel</Button>
+            <Button type="primary" htmlType="submit" loading={isSubmitting}>
+              {profile ? 'Update Profile' : 'Create Customer'}
+            </Button>
+          </div>
+        </Form>
+      )}
     </Formik>
   );
 };
